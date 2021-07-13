@@ -20,6 +20,8 @@ import sys
 import os
 import subprocess
 import re
+# local imports
+import config
 
 # check version 
 if sys.version_info < (3,6):
@@ -29,6 +31,10 @@ if sys.version_info < (3,6):
 ################################################################################
 # functions
 ################################################################################
+
+##################################################
+# if directory is not found, then create it
+##################################################
 def set_path (dirpath, basename):
   path = os.path.join (dirpath, basename)
   if not os.access (path, os.F_OK):
@@ -36,9 +42,9 @@ def set_path (dirpath, basename):
     # make the directory
     command = ['mkdir','-p',path]
     run_cmd (command)
-  else:
-    print ('INFO:found path:', path)
-  return path
+  #else:
+  #  print ('INFO:found path:', path)
+  #return path
 
 
 ##################################################
@@ -126,45 +132,27 @@ HOME = os.environ['HOME']
 QUESTA_UVM_HOME = os.environ['QUESTA_UVM_HOME']
 QUESTA_UVM_PKG  = os.environ['QUESTA_UVM_PKG']
 
-# set project directory
-# PROJ_HOME needs to be set to top level before first use
-PROJ_HOME = os.path.join (HOME,'verif_academy/uvm_basics/complete')
-
-# set env var PROJ_HOME
-os.environ['PROJ_HOME'] = PROJ_HOME
-
-# traverse directories from cwd, upwards until PROJ_HOME is found
-# note that commands are run from PROJ_HOME
+# configuration file must be found at top level of project 
+# traverse directories from cwd, upwards until config_file is found
 CWD = os.getcwd()
-while CWD != PROJ_HOME:
+config_file = '!configure'
+while not os.access (config_file, os.F_OK):
   CWD = os.path.dirname(CWD)
   if (CWD == '/'):
-    print ('ERROR: PROJ_HOME', PROJ_HOME, 'not found')
+    print ('ERROR: configuration file', config_file, 'not found')
     sys.exit()
   os.chdir (CWD)
 
-if CWD != PROJ_HOME:
-  print ('ERROR: PROJ_HOME not found', PROJ_HOME)
-  print ('change PROJ_HOME in sim.py to top level cloned path')
-  sys.exit()
-else:
-  print ('PROJ_HOME found at', CWD)
+# directory is now at top level of project, PROJ_HOME
+PROJ_HOME = CWD
+CONFIG = config.get_config (config_file)
 
-# define PROJ local vars and env vars for directory structure
-PROJ_BIN = set_path (PROJ_HOME, 'bin')
-#os.environ ['PROJ_BIN'] = PROJ_BIN
-PROJ_DUT = set_path (PROJ_HOME, 'dut')
-PROJ_SIM = set_path (PROJ_HOME, 'sim')
+# create path for simulation results
+PROJ_SIM = CONFIG['PROJ_SIM']
+set_path (PROJ_HOME, PROJ_SIM)
 set_path (PROJ_SIM, testname)
-PROJ_TB  = set_path (PROJ_HOME, 'tb')
-# define TB local vars and env vars for directory structure
-TB_ENV   = set_path (PROJ_TB, 'env')
-TB_TOP   = set_path (PROJ_TB, 'top')
-TB_MY    = set_path (PROJ_TB, 'my')
-TB_TESTS = set_path (PROJ_TB, 'tests')
 
-
-# top level filelist in $PROJ_HOME
+# top level filelist must be in PROJ_HOME
 Filelist = get_filelist ('filelist')
 
 # build the qrun command
@@ -180,13 +168,10 @@ command += ['-timeout', '2m']
 command += ['-uvm', '-uvmhome', QUESTA_UVM_HOME, '-uvmexthome', QUESTA_UVM_PKG]
 command += ['-top','top']
 command += ['-verbose']
-command += ['-gui=interactive']
-#command += ['-script', 'script.sim.py']
+if CONFIG['QRUN_GUI'] == 'True':
+  command += ['-gui=interactive']
 command += ['+UVM_TESTNAME=' + testname]
 command += ['-outdir', os.path.join(PROJ_SIM,testname)]
-
-#for token in command:
-#  print ('command=', token)
 
 lines = run_cmd (command)
 for line in lines:

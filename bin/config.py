@@ -1,5 +1,4 @@
 #! /usr/bin/env python3
-
 ##------------------------------------------------------------------------------
 ##  Copyright (c) 2021 by Strauch Consulting, LLC. and Xpeerant, Inc.
 ##
@@ -20,42 +19,20 @@ import sys
 import os
 import re
 
-# set project directory
-# PROJ_HOME needs to be set to top level before first use
+################################################################################
+# Read configuration file and return items in a dictionary
+################################################################################
+def get_config (filename):
+  # TODO: trap exception FileNotFoundError
+  fhr = open (filename,"r")
 
-# When running for first time, run in intended PROJ_HOME directory.
-# This allows the script to find the proj_config file.
-# If PROJ_HOME: item is missing then prompt user to enter the PROJ_HOME path.
-#open $PROJ_HOME/sim_config file 
-
-proj_config = 'proj_config'
-message = {
-          'HOME' : "",
-          'PROJ_HOME' : "Enter full path to project's home directory", 
-          'PROJ_SIM'  : "Enter full path to project's sim directory", 
-          'PROJ_TB'   : "Enter full path to project's testbench directory", 
-          }
-
-if os.access (proj_config, os.F_OK):
-  sys.exit ('ERROR: file %s already exists' % proj_config)
-else:
-  fhw = open (proj_config,"w")
-
-for key in list(message.keys()):
-  if key == 'HOME':
-    HOME = os.environ['HOME']
-    fhw.write('%s: %s\n' % (key, HOME))
-  elif key == 'PROJ_HOME':
-    print ('\n', message[key], sep='')
-    print ('Use $HOME for home directory', HOME)
-    value = input('%s: ' % key)
-    value = re.sub ('\$HOME', HOME, value)
-    fhw.write('%s:\t%s\n' % (key, value))
-    PROJ_HOME = value
-  else:
-    print ('\n', message[key], sep='')
-    print ('Use $PROJ_HOME for project home directory', PROJ_HOME)
-    value = input('%s: ' % key)
-    value = re.sub ('\$PROJ_HOME', PROJ_HOME, value)
-    fhw.write('%s:\t%s\n' % (key, value))
+  config = {}
+  for line in fhr.readlines():
+    # get the key:value
+    mObj = re.search ('^\s*(\w+)\s*:\s*([\w/]+)', line)
+    if mObj:
+      key   = mObj.group(1)
+      value = mObj.group(2)
+      config[key] = value
+  return config
 
