@@ -115,27 +115,25 @@ def get_filelist (filename):
 
 
 ################################################################################
-# run main program
+# Main Program
 ################################################################################
 # global program identifier (sim.py)
 ThisFile = os.path.basename (__file__)
 
 # command line args
 if len(sys.argv) != 2:
-  print ('Error: sim.py <testname>')
+  print ('Usage: sim.py <testname>')
   sys.exit()
 else:
   testname = sys.argv[1]
 
 # set environment
-HOME = os.environ['HOME']
-QUESTA_UVM_HOME = os.environ['QUESTA_UVM_HOME']
-QUESTA_UVM_PKG  = os.environ['QUESTA_UVM_PKG']
+#HOME = os.environ['HOME']
 
 # configuration file must be found at top level of project 
 # traverse directories from cwd, upwards until config_file is found
-CWD = os.getcwd()
 config_file = '!configure'
+CWD = os.getcwd()
 while not os.access (config_file, os.F_OK):
   CWD = os.path.dirname(CWD)
   if (CWD == '/'):
@@ -146,6 +144,10 @@ while not os.access (config_file, os.F_OK):
 # directory is now at top level of project, PROJ_HOME
 PROJ_HOME = CWD
 CONFIG = config.get_config (config_file)
+
+# QuestaSim UVM hooks
+QUESTA_UVM_HOME = CONFIG['QUESTA_UVM_HOME']
+QUESTA_UVM_PKG  = CONFIG['QUESTA_UVM_PKG']
 
 # create path for simulation results
 PROJ_SIM = CONFIG['PROJ_SIM']
@@ -163,14 +165,16 @@ command += Filelist
 command += ['-vlog.log', '%s/%s/vlog.log' % (PROJ_SIM, testname)]
 command += ['-vsim.log', '%s/%s/vsim.log' % (PROJ_SIM, testname)]
 command += ['-logfile',  '%s/%s/qrun.log' % (PROJ_SIM, testname)]
-
-command += ['-timeout', '2m']
 command += ['-uvm', '-uvmhome', QUESTA_UVM_HOME, '-uvmexthome', QUESTA_UVM_PKG]
-command += ['-top','top']
-command += ['-verbose']
-if CONFIG['QRUN_GUI'] == 'True':
-  command += ['-gui=interactive']
+
+# get these options from config file
+#command += ['-verbose']
+#command += ['-timeout', '2m']
+#command += ['-top','top']
+command += CONFIG['QRUN_OPTS']
+
 command += ['+UVM_TESTNAME=' + testname]
+
 command += ['-outdir', os.path.join(PROJ_SIM,testname)]
 
 lines = run_cmd (command)

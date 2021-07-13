@@ -28,11 +28,26 @@ def get_config (filename):
 
   config = {}
   for line in fhr.readlines():
+    # remove comments, 
+    line = re.sub ('#.*$','',line)
     # get the key:value
-    mObj = re.search ('^\s*(\w+)\s*:\s*([\w/]+)', line)
+    mObj = re.search ('^\s*(\w+)\s*:\s*(.*$)', line)
     if mObj:
       key   = mObj.group(1)
       value = mObj.group(2)
+
+      # if value is enclosed in [] then parse as a list
+      if re.search ('\[.*\]', value):
+        # remove brackets
+        opt = re.sub ('\[','', value)
+        opt = re.sub ('\]\s*$','', opt)
+        # split on cammas
+        opt = opt.split(',')
+        value = []
+        # split on whitespace
+        for item in opt:
+          item = item.split()
+          value += item
       config[key] = value
   return config
 

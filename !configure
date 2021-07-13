@@ -1,2 +1,9 @@
+# QuestaSim hooks
+QUESTA_UVM_HOME : /opt/questa/prime/questasim/verilog_src/uvm-1.2
+QUESTA_UVM_PKG  : /opt/questa/prime/questasim/verilog_src/questa_uvm_pkg-1.2
+
+# Project settings
 PROJ_SIM : simout
-QRUN_GUI : False
+
+# qrun options
+QRUN_OPTS : [-verbose, -gui=interactive, -timeout 2m , -top top]
